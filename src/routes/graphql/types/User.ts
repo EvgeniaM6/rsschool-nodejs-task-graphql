@@ -1,4 +1,4 @@
-import { GraphQLFloat, GraphQLObjectType, GraphQLString, GraphQLList } from 'graphql';
+import { GraphQLFloat, GraphQLObjectType, GraphQLString, GraphQLList, GraphQLInputObjectType } from 'graphql';
 import { UUIDType } from './uuid.js';
 import { Profile } from './Profile.js';
 import { Post } from './Post.js';
@@ -38,5 +38,13 @@ export const User: GraphQLObjectType<{
         return await context.prismaClient.user.findMany({ where: { userSubscribedTo: { some: { authorId: parent.id } } }});
       }
     }
+  })
+});
+
+export const CreateUserInput = new GraphQLInputObjectType({
+  name: 'CreateUserInput',
+  fields: () => ({
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
   })
 });

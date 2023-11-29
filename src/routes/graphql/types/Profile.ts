@@ -1,4 +1,4 @@
-import { GraphQLBoolean, GraphQLInt, GraphQLObjectType } from 'graphql';
+import { GraphQLBoolean, GraphQLInputObjectType, GraphQLInt, GraphQLObjectType } from 'graphql';
 import { UUIDType } from './uuid.js';
 import { MemberType, MemberTypeIdEnum } from './MemberType.js';
 import { PrismaClient } from '@prisma/client';
@@ -17,5 +17,15 @@ export const Profile = new GraphQLObjectType({
         return await context.prismaClient.memberType.findUnique({ where: { id: parent.memberTypeId }})
       }
     }
+  })
+});
+
+export const CreateProfileInput = new GraphQLInputObjectType({
+  name: 'CreateProfileInput',
+  fields: () => ({
+    isMale: { type: GraphQLBoolean },
+    yearOfBirth: { type: GraphQLInt },
+    userId: { type: UUIDType },
+    memberTypeId: { type: MemberTypeIdEnum },
   })
 });
