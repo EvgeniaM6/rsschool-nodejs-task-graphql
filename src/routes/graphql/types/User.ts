@@ -1,8 +1,9 @@
-import { GraphQLFloat, GraphQLObjectType, GraphQLString, GraphQLList, GraphQLInputObjectType } from 'graphql';
+import { GraphQLFloat, GraphQLObjectType, GraphQLString, GraphQLList, GraphQLInputObjectType, GraphQLNonNull, GraphQLBoolean } from 'graphql';
 import { UUIDType } from './uuid.js';
 import { Profile } from './Profile.js';
 import { Post } from './Post.js';
 import { PrismaClient } from '@prisma/client';
+import { ChangeUserArgs, DeleteRecordArgs, MutationUserArgs } from './MutationArgsTypes.js';
 
 export const User: GraphQLObjectType<{
   id: string;
@@ -41,7 +42,7 @@ export const User: GraphQLObjectType<{
   })
 });
 
-export const CreateUserInput = new GraphQLInputObjectType({
+const CreateUserInput = new GraphQLInputObjectType({
   name: 'CreateUserInput',
   fields: () => ({
     name: { type: GraphQLString },
@@ -49,10 +50,42 @@ export const CreateUserInput = new GraphQLInputObjectType({
   })
 });
 
-export const ChangeUserInput = new GraphQLInputObjectType({
+const ChangeUserInput = new GraphQLInputObjectType({
   name: 'ChangeUserInput',
   fields: () => ({
     name: { type: GraphQLString },
     balance: { type: GraphQLFloat },
   })
 });;
+
+export const userMutations = {
+  createUser: {
+    type: User,
+    args: { dto: { type: new GraphQLNonNull(CreateUserInput) } },
+    resolve: async (_: unknown, { dto }: MutationUserArgs, { prismaClient }: { prismaClient: PrismaClient }) => {
+      return await prismaClient.user.create({ data: dto });
+    }
+  },
+  deleteUser: {
+    type: GraphQLBoolean,
+    args: { id: { type: new GraphQLNonNull(UUIDType) } },
+    resolve: async (_: unknown, { id }: DeleteRecordArgs, { prismaClient }: { prismaClient: PrismaClient }) => {
+      try {
+        await prismaClient.user.delete({ where: { id }});
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+  },
+  changeUser: {
+    type: User,
+    args: {
+      id: { type: new GraphQLNonNull(UUIDType) },
+      dto: { type: new GraphQLNonNull(ChangeUserInput) },
+    },
+    resolve: async (_: unknown, { id, dto }: ChangeUserArgs, { prismaClient }: { prismaClient: PrismaClient }) => {
+      return await prismaClient.user.update({ where: { id }, data: dto });
+    }
+  },
+}

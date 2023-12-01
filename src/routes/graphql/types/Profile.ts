@@ -1,7 +1,8 @@
-import { GraphQLBoolean, GraphQLInputObjectType, GraphQLInt, GraphQLObjectType } from 'graphql';
+import { GraphQLBoolean, GraphQLInputObjectType, GraphQLInt, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { UUIDType } from './uuid.js';
 import { MemberType, MemberTypeIdEnum } from './MemberType.js';
 import { PrismaClient } from '@prisma/client';
+import { ChangeProfileArgs, DeleteRecordArgs, MutationProfileArgs } from './MutationArgsTypes.js';
 
 export const Profile = new GraphQLObjectType({
   name: 'Profile',
@@ -20,7 +21,7 @@ export const Profile = new GraphQLObjectType({
   })
 });
 
-export const CreateProfileInput = new GraphQLInputObjectType({
+const CreateProfileInput = new GraphQLInputObjectType({
   name: 'CreateProfileInput',
   fields: () => ({
     isMale: { type: GraphQLBoolean },
@@ -30,7 +31,7 @@ export const CreateProfileInput = new GraphQLInputObjectType({
   })
 });
 
-export const ChangeProfileInput = new GraphQLInputObjectType({
+const ChangeProfileInput = new GraphQLInputObjectType({
   name: 'ChangeProfileInput',
   fields: () => ({
     isMale: { type: GraphQLBoolean },
@@ -39,3 +40,35 @@ export const ChangeProfileInput = new GraphQLInputObjectType({
   })
 });
 ;
+
+export const profileMutations = {
+  createProfile: {
+    type: Profile,
+    args: { dto: { type: new GraphQLNonNull(CreateProfileInput) } },
+    resolve: async (_: unknown, { dto }: MutationProfileArgs, { prismaClient }: { prismaClient: PrismaClient }) => {
+      return await prismaClient.profile.create({ data: dto });
+    }
+  },
+  deleteProfile: {
+    type: GraphQLBoolean,
+    args: { id: { type: new GraphQLNonNull(UUIDType) } },
+    resolve: async (_: unknown, { id }: DeleteRecordArgs, { prismaClient }: { prismaClient: PrismaClient }) => {
+      try {
+        await prismaClient.profile.delete({ where: { id }});
+        return true;
+      } catch (error) {
+        return false;
+      }
+    }
+  },
+  changeProfile: {
+    type: Profile,
+    args: {
+      id: { type: new GraphQLNonNull(UUIDType) },
+      dto: { type: new GraphQLNonNull(ChangeProfileInput) },
+    },
+    resolve: async (_: unknown, { id, dto }: ChangeProfileArgs, { prismaClient }: { prismaClient: PrismaClient }) => {
+      return await prismaClient.profile.update({ where: { id }, data: dto });
+    }
+  },
+}
