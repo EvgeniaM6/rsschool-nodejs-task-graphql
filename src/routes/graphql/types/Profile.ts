@@ -3,6 +3,7 @@ import { UUIDType } from './uuid.js';
 import { MemberType, MemberTypeIdEnum } from './MemberType.js';
 import { PrismaClient } from '@prisma/client';
 import { ChangeProfileArgs, DeleteRecordArgs, MutationProfileArgs } from './MutationArgsTypes.js';
+import { GraphQLContext } from './graphql.type.js';
 
 export const Profile = new GraphQLObjectType({
   name: 'Profile',
@@ -14,8 +15,8 @@ export const Profile = new GraphQLObjectType({
     memberTypeId: { type: MemberTypeIdEnum },
     memberType: {
       type: MemberType,
-      resolve: async (parent: { memberTypeId: string }, args, context: { prismaClient: PrismaClient }) => {
-        return await context.prismaClient.memberType.findUnique({ where: { id: parent.memberTypeId }})
+      resolve: async (parent: { memberTypeId: string }, _, { dataLoaders }: GraphQLContext) => {
+        return await dataLoaders.memberTypeLoader.load(parent.memberTypeId);
       }
     }
   })
